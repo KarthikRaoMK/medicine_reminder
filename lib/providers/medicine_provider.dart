@@ -3,7 +3,8 @@ import '../models/medicine.dart';
 
 class MedicineProvider extends ChangeNotifier {
 
-  List<Medicine> _medicines = [
+  // Dummy data — will be replaced with API calls later
+  final List<Medicine> _medicines = [
     Medicine(
       id: 1,
       name: 'Paracetamol',
@@ -26,7 +27,7 @@ class MedicineProvider extends ChangeNotifier {
       dosage: '850mg',
       frequency: 'Three times a day',
       time: '01:00 PM',
-      stockCount: 5,
+      stockCount: 5,   // low stock — will trigger warning
     ),
     Medicine(
       id: 4,
@@ -38,9 +39,10 @@ class MedicineProvider extends ChangeNotifier {
     ),
   ];
 
-  List<Medicine> get medicines => _medicines;
+  // ── Getters ────────────────────────────────────────────
+  List<Medicine> get medicines       => _medicines;
 
-  List<Medicine> get takenMedicines =>
+  List<Medicine> get takenMedicines  =>
       _medicines.where((m) => m.isTaken).toList();
 
   List<Medicine> get pendingMedicines =>
@@ -49,17 +51,22 @@ class MedicineProvider extends ChangeNotifier {
   List<Medicine> get lowStockMedicines =>
       _medicines.where((m) => m.stockCount < 7).toList();
 
+  // ── Actions ────────────────────────────────────────────
+
+  // Toggle taken / not taken
   void toggleTaken(int id) {
     final medicine = _medicines.firstWhere((m) => m.id == id);
     medicine.isTaken = !medicine.isTaken;
-    notifyListeners();
+    notifyListeners(); // rebuild all listening widgets
   }
 
+  // Add new medicine
   void addMedicine(Medicine medicine) {
     _medicines.add(medicine);
     notifyListeners();
   }
 
+  // Delete medicine by id
   void deleteMedicine(int id) {
     _medicines.removeWhere((m) => m.id == id);
     notifyListeners();

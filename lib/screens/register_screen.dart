@@ -9,25 +9,13 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
+
+  final _nameController     = TextEditingController();
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _obscurePassword = true;
-  bool _isLoading = false;
-
-  void _register() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
-
-    if (mounted) {
-      Navigator.pop(context);
-      // go back to login after register
-    }
-  }
+  final _formKey            = GlobalKey<FormState>();
+  bool  _obscurePassword    = true;
+  bool  _isLoading          = false;
 
   @override
   void dispose() {
@@ -38,13 +26,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   InputDecoration _inputDecoration(
-      String label, String hint, IconData icon) {
+      String label, String hint, IconData icon,
+      {Widget? suffixIcon}) {
     return InputDecoration(
-      labelText: label,
-      hintText: hint,
+      labelText:  label,
+      hintText:   hint,
       prefixIcon: Icon(icon),
-      filled: true,
-      fillColor: AppColors.white,
+      suffixIcon: suffixIcon,
+      filled:     true,
+      fillColor:  AppColors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -57,7 +47,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppColors.primary),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
     );
+  }
+
+  void _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isLoading = false);
+
+    if (mounted) {
+      // Go back to login after successful register
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -80,52 +87,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
                 const Text(
-                  'Create Account 🎉',
+                  'Create Account ',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
                   'Start managing your medicines today',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textGrey,
-                  ),
+                  style: TextStyle(fontSize: 16, color: AppColors.textGrey),
                 ),
+
                 const SizedBox(height: 40),
 
+                // Full Name
                 TextFormField(
                   controller: _nameController,
                   decoration: _inputDecoration(
-                      'Full Name', 'John Doe', Icons.person_outline),
+                    'Full Name', 'John Doe', Icons.person_outline),
                   validator: (value) =>
-                      value!.isEmpty ? 'Please enter your name' : null,
+                      value == null || value.isEmpty
+                          ? 'Please enter your name'
+                          : null,
                 ),
+
                 const SizedBox(height: 16),
 
+                // Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: _inputDecoration(
-                      'Email', 'your@email.com', Icons.email_outlined),
+                    'Email', 'your@email.com', Icons.email_outlined),
                   validator: (value) {
-                    if (value!.isEmpty) return 'Please enter email';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter email';
+                    }
                     if (!value.contains('@')) return 'Invalid email';
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
 
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  decoration:
-                      _inputDecoration('Password', '••••••••', Icons.lock_outline)
-                          .copyWith(
+                  decoration: _inputDecoration(
+                    'Password', '••••••••', Icons.lock_outline,
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
                           ? Icons.visibility_off
@@ -135,13 +151,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   validator: (value) {
-                    if (value!.isEmpty) return 'Please enter password';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter password';
+                    }
                     if (value.length < 6) return 'Min 6 characters';
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 32),
 
+                // Register button
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -170,6 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 24),
 
+                // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -1,11 +1,11 @@
 class Medicine {
-  final int? id;
+  final int?   id;
   final String name;
   final String dosage;
   final String frequency;
   final String time;
-  final int stockCount;
-  bool isTaken;
+  final int    stockCount;
+  bool         isTaken;
 
   Medicine({
     this.id,
@@ -17,23 +17,25 @@ class Medicine {
     this.isTaken = false,
   });
 
+  // Dart object → JSON map  (used when sending to API)
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'dosage': dosage,
-    'frequency': frequency,
-    'time': time,
+    'id':         id,
+    'name':       name,
+    'dosage':     dosage,
+    'frequency':  frequency,
+    'time':       time,
     'stockCount': stockCount,
-    'isTaken': isTaken,
+    'isTaken':    isTaken,
   };
 
+  // JSON map → Dart object  (used when receiving from API)
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
-    id: json['id'],
-    name: json['name'],
-    dosage: json['dosage'],
-    frequency: json['frequency'],
-    time: json['time'],
+    id:         json['id'],
+    name:       json['name'],
+    dosage:     json['dosage'],
+    frequency:  json['frequency'],
+    time:       json['time'],
     stockCount: json['stockCount'],
-    isTaken: json['isTaken'] ?? false,
+    isTaken:    json['isTaken'] ?? false,
   );
 }

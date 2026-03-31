@@ -3,7 +3,7 @@ import '../models/medicine.dart';
 import '../utils/app_colors.dart';
 
 class MedicineCard extends StatelessWidget {
-  final Medicine medicine;
+  final Medicine    medicine;
   final VoidCallback onTaken;
 
   const MedicineCard({
@@ -36,6 +36,8 @@ class MedicineCard extends StatelessWidget {
       ),
       child: Row(
         children: [
+
+          // ── Medicine icon ──────────────────────────────
           Container(
             width: 50,
             height: 50,
@@ -54,21 +56,27 @@ class MedicineCard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
+          // ── Name, dosage, time, stock ──────────────────
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
+                // Name + Low Stock badge
                 Row(
                   children: [
-                    Text(
-                      medicine.name,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDark,
-                        decoration: medicine.isTaken
-                            ? TextDecoration.lineThrough
-                            : null,
+                    Flexible(
+                      child: Text(
+                        medicine.name,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark,
+                          decoration: medicine.isTaken
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (medicine.stockCount < 7) ...[
@@ -92,35 +100,41 @@ class MedicineCard extends StatelessWidget {
                     ],
                   ],
                 ),
+
                 const SizedBox(height: 4),
+
+                // Dosage & frequency
                 Text(
                   '${medicine.dosage} • ${medicine.frequency}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textGrey,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
+                // Time & stock count
                 Row(
                   children: [
-                    Icon(Icons.access_time,
+                    const Icon(Icons.access_time,
                         size: 13, color: AppColors.textGrey),
                     const SizedBox(width: 4),
                     Text(
                       medicine.time,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.inventory_2_outlined,
+                    const Icon(Icons.inventory_2_outlined,
                         size: 13, color: AppColors.textGrey),
                     const SizedBox(width: 4),
                     Text(
                       '${medicine.stockCount} left',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textGrey,
                       ),
@@ -131,9 +145,11 @@ class MedicineCard extends StatelessWidget {
             ),
           ),
 
+          // ── Check button ───────────────────────────────
           GestureDetector(
             onTap: onTaken,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               width: 36,
               height: 36,
               decoration: BoxDecoration(
@@ -144,7 +160,9 @@ class MedicineCard extends StatelessWidget {
               ),
               child: Icon(
                 Icons.check,
-                color: medicine.isTaken ? AppColors.white : AppColors.primary,
+                color: medicine.isTaken
+                    ? AppColors.white
+                    : AppColors.primary,
                 size: 20,
               ),
             ),

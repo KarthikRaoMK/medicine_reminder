@@ -3,16 +3,17 @@ import 'package:provider/provider.dart';
 import '../providers/medicine_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/medicine_card.dart';
+import 'add_medicine_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<MedicineProvider>();
-    final pending = provider.pendingMedicines;
-    final taken = provider.takenMedicines;
-    final lowStock = provider.lowStockMedicines;
+    final provider  = context.watch<MedicineProvider>();
+    final pending   = provider.pendingMedicines;
+    final taken     = provider.takenMedicines;
+    final lowStock  = provider.lowStockMedicines;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -20,19 +21,22 @@ class HomeScreen extends StatelessWidget {
         child: CustomScrollView(
           slivers: [
 
+            // ── Header ──────────────────────────────────
             SliverToBoxAdapter(
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
+                    bottomLeft:  Radius.circular(30),
                     bottomRight: Radius.circular(30),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
+                    // Greeting row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -40,7 +44,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Good Morning! 👋',
+                              'Good Morning!',
                               style: TextStyle(
                                 color: AppColors.white.withOpacity(0.8),
                                 fontSize: 14,
@@ -60,15 +64,14 @@ class HomeScreen extends StatelessWidget {
                           radius: 24,
                           backgroundColor: AppColors.white.withOpacity(0.2),
                           child: const Icon(
-                            Icons.person,
-                            color: AppColors.white,
-                          ),
+                              Icons.person, color: AppColors.white),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 20),
 
+                    // Stats row
                     Row(
                       children: [
                         _StatCard(
@@ -95,6 +98,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
+            // ── Low stock warning ────────────────────────
             if (lowStock.isNotEmpty)
               SliverToBoxAdapter(
                 child: Container(
@@ -112,7 +116,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '${lowStock.map((m) => m.name).join(', ')} running low!',
+                          '${lowStock.map((m) => m.name).join(', ')} running low — please refill!',
                           style: TextStyle(
                             color: Colors.red.shade700,
                             fontWeight: FontWeight.w500,
@@ -124,6 +128,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
+            // ── Pending section title ────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -140,31 +145,53 @@ class HomeScreen extends StatelessWidget {
                     ),
                     Text(
                       '${pending.length} remaining',
-                      style: TextStyle(color: AppColors.textGrey),
+                      style: const TextStyle(color: AppColors.textGrey),
                     ),
                   ],
                 ),
               ),
             ),
 
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final medicine = pending[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: MedicineCard(
-                      medicine: medicine,
-                      onTaken: () => context
-                          .read<MedicineProvider>()
-                          .toggleTaken(medicine.id!),
+            // ── Pending medicine list ────────────────────
+            pending.isEmpty
+                ? SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.check_circle,
+                                size: 48, color: Colors.green.shade300),
+                            const SizedBox(height: 8),
+                            Text(
+                              'All medicines taken for today! 🎉',
+                              style: TextStyle(color: AppColors.textGrey),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  );
-                },
-                childCount: pending.length,
-              ),
-            ),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final medicine = pending[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: MedicineCard(
+                            medicine: medicine,
+                            onTaken: () => context
+                                .read<MedicineProvider>()
+                                .toggleTaken(medicine.id!),
+                          ),
+                        );
+                      },
+                      childCount: pending.length,
+                    ),
+                  ),
 
+            // ── Taken today section ──────────────────────
             if (taken.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: Padding(
@@ -205,6 +232,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
 
+            // Bottom padding so FAB doesn't cover last card
             const SliverToBoxAdapter(
               child: SizedBox(height: 100),
             ),
@@ -212,8 +240,16 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
+      // ── FAB ─────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+            Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddMedicineScreen(),
+      ),
+    );
+        },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: AppColors.white),
         label: const Text(
@@ -222,29 +258,31 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
 
+      // ── Bottom nav ───────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor:   AppColors.primary,
         unselectedItemColor: AppColors.textGrey,
         type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.white,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
+            icon:       Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
+            icon:       Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
+            icon:       Icon(Icons.people_outline),
             activeIcon: Icon(Icons.people),
             label: 'Profiles',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
+            icon:       Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
@@ -254,9 +292,10 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ── Stat card widget (private to this file) ──────────────
 class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
+  final String   label;
+  final String   value;
   final IconData icon;
 
   const _StatCard({

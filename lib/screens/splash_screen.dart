@@ -13,8 +13,8 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
 
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  late Animation<double>   _fadeAnimation;
+  late Animation<Offset>   _slideAnimation;
 
   @override
   void initState() {
@@ -71,6 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // App icon box
                 Container(
                   width: 100,
                   height: 100,
@@ -91,7 +92,9 @@ class _SplashScreenState extends State<SplashScreen>
                     color: AppColors.primary,
                   ),
                 ),
+
                 const SizedBox(height: 24),
+
                 const Text(
                   'MediRemind',
                   style: TextStyle(
@@ -101,7 +104,9 @@ class _SplashScreenState extends State<SplashScreen>
                     letterSpacing: 1.2,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
                   'Never miss a dose',
                   style: TextStyle(
@@ -109,7 +114,9 @@ class _SplashScreenState extends State<SplashScreen>
                     color: AppColors.white.withOpacity(0.8),
                   ),
                 ),
+
                 const SizedBox(height: 60),
+
                 const CircularProgressIndicator(
                   color: AppColors.white,
                   strokeWidth: 2,
