@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,11 +47,24 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateToLogin() async {
     await Future.delayed(const Duration(seconds: 3));
+    
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      // Check if user is already logged in
+      final isLoggedIn = await AuthService().isLoggedIn();
+      
+      if (isLoggedIn) {
+        // Navigate to home screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        // Navigate to login screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 

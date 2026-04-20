@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
 
@@ -61,6 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2)); // simulated API call
+
+    // Save login state
+    await AuthService().login(
+      _emailController.text,
+      _passwordController.text,
+    );
+
     setState(() => _isLoading = false);
 
     if (mounted) {
