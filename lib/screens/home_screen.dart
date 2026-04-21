@@ -7,6 +7,8 @@ import '../widgets/medicine_card.dart';
 import 'add_medicine_screen.dart';
 import 'history_screen.dart';
 import 'login_screen.dart';
+import 'settings_screen.dart';
+import 'profiles_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,8 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const _HomeTab(),
     const HistoryScreen(),
-    const Center(child: Text('Profiles — Coming Soon')),
-    const Center(child: Text('Settings — Coming Soon')),
+    const ProfilesScreen(),
+    const SettingsScreen(),
   ];
 
   @override
