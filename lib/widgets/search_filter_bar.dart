@@ -35,11 +35,16 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
   @override
   Widget build(BuildContext context) {
     return Consumer<MedicineProvider>(
-      builder: (context, medicineProvider, _) {
+      builder: (context, provider, _) {
+        // ✅ Using PUBLIC getters instead of private fields
+        final selectedCategory  = provider.selectedCategory;
+        final selectedFrequency = provider.selectedFrequency;
+        final searchQuery       = provider.searchQuery;
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Search bar
+            // ── Search bar ──────────────────────────────
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
@@ -54,7 +59,8 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                             ? IconButton(
                                 onPressed: () {
                                   _searchController.clear();
-                                  medicineProvider.searchMedicines('');
+                                  provider.searchMedicines('');
+                                  setState(() {});
                                 },
                                 icon: const Icon(Icons.clear),
                               )
@@ -64,7 +70,7 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                         ),
                       ),
                       onChanged: (value) {
-                        medicineProvider.searchMedicines(value);
+                        provider.searchMedicines(value);
                         setState(() {});
                       },
                     ),
@@ -72,21 +78,24 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () {
-                      setState(() {
-                        _showFilters = !_showFilters;
-                      });
+                      setState(() => _showFilters = !_showFilters);
                     },
                     icon: const Icon(Icons.tune),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppColors.primary.withAlpha(25),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                       foregroundColor: AppColors.primary,
                     ),
+                  ),
+                  IconButton(
+                    onPressed: widget.onClose,
+                    icon: const Icon(Icons.close),
+                    color: AppColors.textGrey,
                   ),
                 ],
               ),
             ),
 
-            // Filters
+            // ── Filters ─────────────────────────────────
             if (_showFilters)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -105,25 +114,25 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                       children: [
                         _buildFilterChip(
                           label: 'All',
-                          selected: medicineProvider._selectedCategory == null,
+                          selected: selectedCategory == null,
                           onSelected: (_) {
-                            medicineProvider.filterByCategory(null);
+                            provider.filterByCategory(null);
                             setState(() {});
                           },
                         ),
                         ...MedicineCategory.values.map((category) {
                           return _buildFilterChip(
                             label: category.label,
-                            selected:
-                                medicineProvider._selectedCategory == category,
+                            selected: selectedCategory == category,
                             onSelected: (_) {
-                              medicineProvider.filterByCategory(category);
+                              provider.filterByCategory(category);
                               setState(() {});
                             },
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
+
                     const SizedBox(height: 16),
 
                     // Frequency filter
@@ -137,46 +146,47 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
                       children: [
                         _buildFilterChip(
                           label: 'All',
-                          selected: medicineProvider._selectedFrequency == null,
+                          selected: selectedFrequency == null,
                           onSelected: (_) {
-                            medicineProvider.filterByFrequency(null);
+                            provider.filterByFrequency(null);
                             setState(() {});
                           },
                         ),
-                        ...medicineProvider.frequencies.map((frequency) {
+                        ...provider.frequencies.map((frequency) {
                           return _buildFilterChip(
                             label: frequency,
-                            selected:
-                                medicineProvider._selectedFrequency == frequency,
+                            selected: selectedFrequency == frequency,
                             onSelected: (_) {
-                              medicineProvider.filterByFrequency(frequency);
+                              provider.filterByFrequency(frequency);
                               setState(() {});
                             },
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
+
                     const SizedBox(height: 12),
 
-                    // Clear filters button
-                    if (medicineProvider._searchQuery.isNotEmpty ||
-                        medicineProvider._selectedCategory != null ||
-                        medicineProvider._selectedFrequency != null)
+                    // Clear filters
+                    if (searchQuery.isNotEmpty ||
+                        selectedCategory != null ||
+                        selectedFrequency != null)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
                             _searchController.clear();
-                            medicineProvider.clearFilters();
+                            provider.clearFilters();
                             setState(() {});
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.grey[300],
+                            backgroundColor: Colors.grey[300],
+                            foregroundColor: Colors.black,
                           ),
                           child: const Text('Clear Filters'),
                         ),
                       ),
+
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -197,7 +207,7 @@ class _SearchAndFilterBarState extends State<SearchAndFilterBar> {
       selected: selected,
       onSelected: onSelected,
       backgroundColor: Colors.grey[200],
-      selectedColor: AppColors.primary.withAlpha(100),
+      selectedColor: AppColors.primary.withValues(alpha: 0.4),
     );
   }
 }

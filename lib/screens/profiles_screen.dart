@@ -25,33 +25,30 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
       body: Consumer<ProfileProvider>(
         builder: (context, profileProvider, _) {
           final profile = profileProvider.profile;
-          
+
           return SingleChildScrollView(
             child: Column(
               children: [
-                // ── Profile Header ────────────────────────────────────────
+                // ── Profile Header ─────────────────────
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: const BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
+                      bottomLeft:  Radius.circular(30),
                       bottomRight: Radius.circular(30),
                     ),
                   ),
                   child: Column(
                     children: [
-                      // Avatar
                       Container(
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.3),
+                          // ✅ Fixed: withValues instead of withOpacity
+                          color: AppColors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(40),
-                          border: Border.all(
-                            color: AppColors.white,
-                            width: 2,
-                          ),
+                          border: Border.all(color: AppColors.white, width: 2),
                         ),
                         child: Center(
                           child: Text(
@@ -79,20 +76,19 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                       Text(
                         profile.email.isNotEmpty ? profile.email : 'No email',
                         style: TextStyle(
-                          color: AppColors.white.withOpacity(0.7),
+                          color: AppColors.white.withValues(alpha: 0.7),
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Profile completion indicator
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: _getProfileCompleteness(profile),
                           minHeight: 8,
-                          backgroundColor: AppColors.white.withOpacity(0.3),
+                          backgroundColor: AppColors.white.withValues(alpha: 0.3),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.white.withOpacity(0.9),
+                            AppColors.white.withValues(alpha: 0.9),
                           ),
                         ),
                       ),
@@ -100,7 +96,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                       Text(
                         '${(_getProfileCompleteness(profile) * 100).toStringAsFixed(0)}% Complete',
                         style: TextStyle(
-                          color: AppColors.white.withOpacity(0.8),
+                          color: AppColors.white.withValues(alpha: 0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -111,7 +107,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
                 const SizedBox(height: 16),
 
-                // ── Tab Navigation ────────────────────────────────────────
+                // ── Tab Navigation ─────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -121,24 +117,9 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                     ),
                     child: Row(
                       children: [
-                        _buildTabButton(
-                          label: 'Personal',
-                          index: 0,
-                          isActive: _currentTabIndex == 0,
-                          onTap: () => setState(() => _currentTabIndex = 0),
-                        ),
-                        _buildTabButton(
-                          label: 'Medical',
-                          index: 1,
-                          isActive: _currentTabIndex == 1,
-                          onTap: () => setState(() => _currentTabIndex = 1),
-                        ),
-                        _buildTabButton(
-                          label: 'Emergency',
-                          index: 2,
-                          isActive: _currentTabIndex == 2,
-                          onTap: () => setState(() => _currentTabIndex = 2),
-                        ),
+                        _buildTabButton('Personal',  0),
+                        _buildTabButton('Medical',   1),
+                        _buildTabButton('Emergency', 2),
                       ],
                     ),
                   ),
@@ -146,21 +127,10 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
                 const SizedBox(height: 16),
 
-                // ── Tab Content ────────────────────────────────────────
+                // ── Tab Content ────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: () {
-                    switch (_currentTabIndex) {
-                      case 0:
-                        return _buildPersonalTab(context, profile, profileProvider);
-                      case 1:
-                        return _buildMedicalTab(context, profile, profileProvider);
-                      case 2:
-                        return _buildEmergencyTab(context, profile, profileProvider);
-                      default:
-                        return const SizedBox();
-                    }
-                  }(),
+                  child: _buildTabContent(context, profile, profileProvider),
                 ),
 
                 const SizedBox(height: 32),
@@ -172,13 +142,22 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
     );
   }
 
-  // ── Tab Content Builders ────────────────────────────────────────
+  Widget _buildTabContent(
+      BuildContext context, dynamic profile, ProfileProvider provider) {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildPersonalTab(context, profile, provider);
+      case 1:
+        return _buildMedicalTab(context, profile, provider);
+      case 2:
+        return _buildEmergencyTab(context, profile, provider);
+      default:
+        return const SizedBox();
+    }
+  }
 
   Widget _buildPersonalTab(
-    BuildContext context,
-    dynamic profile,
-    ProfileProvider provider,
-  ) {
+      BuildContext context, dynamic profile, ProfileProvider provider) {
     return Column(
       children: [
         _buildEditableField(
@@ -186,11 +165,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           value: profile.name,
           icon: Icons.person_outline,
           onEdit: () => _showEditDialog(
-            context,
-            'Full Name',
-            profile.name,
-            (value) => provider.updateName(value),
-          ),
+              context, 'Full Name', profile.name, provider.updateName),
         ),
         const SizedBox(height: 12),
         _buildEditableField(
@@ -198,11 +173,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           value: profile.email.isEmpty ? 'Not set' : profile.email,
           icon: Icons.email_outlined,
           onEdit: () => _showEditDialog(
-            context,
-            'Email',
-            profile.email,
-            (value) => provider.updateEmail(value),
-          ),
+              context, 'Email', profile.email, provider.updateEmail),
         ),
         const SizedBox(height: 12),
         _buildEditableField(
@@ -210,33 +181,23 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           value: profile.phone.isEmpty ? 'Not set' : profile.phone,
           icon: Icons.phone_outlined,
           onEdit: () => _showEditDialog(
-            context,
-            'Phone',
-            profile.phone,
-            (value) => provider.updatePhone(value),
-          ),
+              context, 'Phone', profile.phone, provider.updatePhone),
         ),
         const SizedBox(height: 12),
         _buildEditableField(
           label: 'Date of Birth',
           value: profile.dateOfBirth.isEmpty ? 'Not set' : profile.dateOfBirth,
           icon: Icons.cake_outlined,
-          onEdit: () => _showDatePicker(
-            context,
-            (value) => provider.updateDateOfBirth(value),
-          ),
+          onEdit: () =>
+              _showDatePicker(context, provider.updateDateOfBirth),
         ),
       ],
     );
   }
 
   Widget _buildMedicalTab(
-    BuildContext context,
-    dynamic profile,
-    ProfileProvider provider,
-  ) {
+      BuildContext context, dynamic profile, ProfileProvider provider) {
     final bloodTypes = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
-
     return Column(
       children: [
         _buildSelectableField(
@@ -244,7 +205,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           value: profile.bloodType,
           icon: Icons.bloodtype_outlined,
           options: bloodTypes,
-          onSelect: (value) => provider.updateBloodType(value),
+          onSelect: provider.updateBloodType,
         ),
         const SizedBox(height: 12),
         _buildEditableField(
@@ -252,22 +213,15 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           value: profile.allergies.isEmpty ? 'None' : profile.allergies,
           icon: Icons.warning_outlined,
           onEdit: () => _showEditDialog(
-            context,
-            'Allergies',
-            profile.allergies,
-            (value) => provider.updateAllergies(value),
-            maxLines: 3,
-          ),
+              context, 'Allergies', profile.allergies, provider.updateAllergies,
+              maxLines: 3),
         ),
       ],
     );
   }
 
   Widget _buildEmergencyTab(
-    BuildContext context,
-    dynamic profile,
-    ProfileProvider provider,
-  ) {
+      BuildContext context, dynamic profile, ProfileProvider provider) {
     return Column(
       children: [
         _buildEditableField(
@@ -280,12 +234,8 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
             context,
             'Emergency Contact Name',
             profile.emergencyContact,
-            (value) async {
-              await provider.updateEmergencyContact(
-                value,
-                profile.emergencyPhone,
-              );
-            },
+            (value) async => provider.updateEmergencyContact(
+                value, profile.emergencyPhone),
           ),
         ),
         const SizedBox(height: 12),
@@ -299,29 +249,19 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
             context,
             'Emergency Contact Phone',
             profile.emergencyPhone,
-            (value) async {
-              await provider.updateEmergencyContact(
-                profile.emergencyContact,
-                value,
-              );
-            },
+            (value) async => provider.updateEmergencyContact(
+                profile.emergencyContact, value),
           ),
         ),
       ],
     );
   }
 
-  // ── Helper Widgets ────────────────────────────────────────
-
-  Widget _buildTabButton({
-    required String label,
-    required int index,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildTabButton(String label, int index) {
+    final isActive = _currentTabIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () => setState(() => _currentTabIndex = index),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -364,35 +304,26 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500)),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
           GestureDetector(
             onTap: onEdit,
-            child: Icon(
-              Icons.edit_outlined,
-              color: AppColors.primary,
-              size: 20,
-            ),
+            child: const Icon(Icons.edit_outlined,
+                color: AppColors.primary, size: 20),
           ),
         ],
       ),
@@ -420,14 +351,11 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
             children: [
               Icon(icon, color: AppColors.primary, size: 22),
               const SizedBox(width: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 12),
@@ -439,9 +367,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 onTap: () => onSelect(option),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                      horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
@@ -451,9 +377,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                   child: Text(
                     option,
                     style: TextStyle(
-                      color: isSelected
-                          ? AppColors.white
-                          : AppColors.textDark,
+                      color: isSelected ? AppColors.white : AppColors.textDark,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -475,24 +399,20 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
     int maxLines = 1,
   }) {
     final controller = TextEditingController(text: initialValue);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: Text(title),
         content: TextField(
           controller: controller,
           maxLines: maxLines,
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Enter value',
-          ),
+              border: OutlineInputBorder(), hintText: 'Enter value'),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
@@ -508,37 +428,30 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   }
 
   void _showDatePicker(
-    BuildContext context,
-    Function(String) onDateSelected,
-  ) async {
-    final selectedDate = await showDatePicker(
+      BuildContext context, Function(String) onDateSelected) async {
+    final selected = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-
-    if (selectedDate != null) {
-      final formattedDate =
-          '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
-      onDateSelected(formattedDate);
+    if (selected != null) {
+      onDateSelected('${selected.day}/${selected.month}/${selected.year}');
     }
   }
 
   double _getProfileCompleteness(dynamic profile) {
-    int filledFields = 0;
-    int totalFields = 9;
-
-    if (profile.name.isNotEmpty) filledFields++;
-    if (profile.email.isNotEmpty) filledFields++;
-    if (profile.phone.isNotEmpty) filledFields++;
-    if (profile.dateOfBirth.isNotEmpty) filledFields++;
-    if (profile.bloodType.isNotEmpty) filledFields++;
-    if (profile.allergies.isNotEmpty && profile.allergies != 'None') filledFields++;
-    if (profile.emergencyContact.isNotEmpty) filledFields++;
-    if (profile.emergencyPhone.isNotEmpty) filledFields++;
-    filledFields++; // ID is always present
-
-    return filledFields / totalFields;
+    int filled = 0;
+    const total = 9;
+    if (profile.name.isNotEmpty) filled++;
+    if (profile.email.isNotEmpty) filled++;
+    if (profile.phone.isNotEmpty) filled++;
+    if (profile.dateOfBirth.isNotEmpty) filled++;
+    if (profile.bloodType.isNotEmpty) filled++;
+    if (profile.allergies.isNotEmpty && profile.allergies != 'None') filled++;
+    if (profile.emergencyContact.isNotEmpty) filled++;
+    if (profile.emergencyPhone.isNotEmpty) filled++;
+    filled++; // id always present
+    return filled / total;
   }
 }

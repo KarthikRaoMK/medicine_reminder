@@ -6,7 +6,7 @@ import '../providers/medicine_provider.dart';
 import 'snooze_reschedule_dialog.dart';
 
 class MedicineCard extends StatelessWidget {
-  final Medicine    medicine;
+  final Medicine     medicine;
   final VoidCallback onTaken;
 
   const MedicineCard({
@@ -18,7 +18,7 @@ class MedicineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSnoozed = medicine.isSnoozed;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -35,7 +35,8 @@ class MedicineCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            // ✅ Fixed: withValues instead of withOpacity
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -45,7 +46,7 @@ class MedicineCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // ── Medicine icon ──────────────────────────────
+              // Medicine icon
               Container(
                 width: 50,
                 height: 50,
@@ -54,7 +55,7 @@ class MedicineCard extends StatelessWidget {
                       ? Colors.orange.shade50
                       : medicine.isTaken
                           ? Colors.green.shade50
-                          : AppColors.primary.withOpacity(0.1),
+                          : AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -70,12 +71,12 @@ class MedicineCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // ── Name, dosage, time, stock ──────────────────
+              // Name, dosage, time, stock
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name + Badges
+                    // Name + Badges row
                     Row(
                       children: [
                         Flexible(
@@ -135,18 +136,14 @@ class MedicineCard extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // Dosage & frequency
                     Text(
                       '${medicine.dosage} • ${medicine.frequency}',
                       style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textGrey,
-                      ),
+                          fontSize: 13, color: AppColors.textGrey),
                     ),
 
                     const SizedBox(height: 4),
 
-                    // Time & stock count
                     Row(
                       children: [
                         const Icon(Icons.access_time,
@@ -167,19 +164,16 @@ class MedicineCard extends StatelessWidget {
                         Text(
                           '${medicine.stockCount} left',
                           style: const TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textGrey,
-                          ),
+                              fontSize: 13, color: AppColors.textGrey),
                         ),
                       ],
                     ),
 
-                    // Show snooze timer if snoozed
                     if (isSnoozed)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          'Snoozed until ${_formatSnoozeTime(medicine.snoozedUntil!)}',
+                          'Snoozed for ${_formatSnoozeRemaining(medicine.snoozedUntil!)}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.orange,
@@ -191,12 +185,11 @@ class MedicineCard extends StatelessWidget {
                 ),
               ),
 
-              // ── Category badge ────────────────────────────
+              // Category badge
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(25),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -211,7 +204,7 @@ class MedicineCard extends StatelessWidget {
             ],
           ),
 
-          // ── Action buttons ───────────────────────────
+          // Action buttons (only when not taken)
           if (!medicine.isTaken) ...[
             const SizedBox(height: 12),
             Row(
@@ -223,11 +216,12 @@ class MedicineCard extends StatelessWidget {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (context) => SnoozeOptionsDialog(
+                        builder: (_) => SnoozeOptionsDialog(
                           onSnooze: (duration) {
                             context
                                 .read<MedicineProvider>()
                                 .snoozeMedicine(medicine.id!, duration);
+                            return () {};
                           },
                         ),
                       );
@@ -247,12 +241,13 @@ class MedicineCard extends StatelessWidget {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (context) => RescheduleDialog(
+                        builder: (_) => RescheduleDialog(
                           currentTime: medicine.time,
                           onReschedule: (newTime) {
                             context
                                 .read<MedicineProvider>()
                                 .rescheduleMedicine(medicine.id!, newTime);
+                            return () {};
                           },
                         ),
                       );
@@ -268,7 +263,7 @@ class MedicineCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -287,8 +282,7 @@ class MedicineCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.check_circle,
-                      color: Colors.green, size: 20),
+                  const Icon(Icons.check_circle, color: Colors.green, size: 20),
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: onTaken,
@@ -302,18 +296,10 @@ class MedicineCard extends StatelessWidget {
     );
   }
 
-  String _formatSnoozeTime(DateTime time) {
-    final now = DateTime.now();
-    final difference = time.difference(now);
-    
-    if (difference.inMinutes < 1) {
-      return 'soon';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ${difference.inMinutes % 60}m';
-    } else {
-      return '${difference.inDays}d';
-    }
+  String _formatSnoozeRemaining(DateTime until) {
+    final diff = until.difference(DateTime.now());
+    if (diff.inMinutes < 1)  return 'soon';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    return '${diff.inHours}h ${diff.inMinutes % 60}m';
   }
 }

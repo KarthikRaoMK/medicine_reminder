@@ -20,11 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   int _currentIndex = 0;
-  // Tracks which bottom nav tab is selected
 
-  // List of screens for each tab
   final List<Widget> _screens = [
     const _HomeTab(),
     const StatisticsDashboardScreen(),
@@ -37,17 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
-      // Show screen based on selected tab
       body: _screens[_currentIndex],
-
-      // FAB only on Home tab
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const AddMedicineScreen()),
+                MaterialPageRoute(builder: (_) => const AddMedicineScreen()),
               ),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add, color: AppColors.white),
@@ -57,11 +49,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
           : null,
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        // onTap updates currentIndex → rebuilds UI with new screen
         selectedItemColor:   AppColors.primary,
         unselectedItemColor: AppColors.textGrey,
         type: BottomNavigationBarType.fixed,
@@ -98,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ── Home tab content (extracted from old HomeScreen) ────────
+// ── Home Tab ───────────────────────────────────────────────
 class _HomeTab extends StatefulWidget {
   const _HomeTab();
 
@@ -121,7 +111,7 @@ class _HomeTabState extends State<_HomeTab> {
       child: CustomScrollView(
         slivers: [
 
-          // ── Header ──────────────────────────────────
+          // ── Header ────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -144,7 +134,8 @@ class _HomeTabState extends State<_HomeTab> {
                           Text(
                             'Good Morning! 👋',
                             style: TextStyle(
-                              color: AppColors.white.withOpacity(0.8),
+                              // ✅ Fixed: withValues instead of withOpacity
+                              color: AppColors.white.withValues(alpha: 0.8),
                               fontSize: 14,
                             ),
                           ),
@@ -160,7 +151,7 @@ class _HomeTabState extends State<_HomeTab> {
                       ),
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: AppColors.white.withOpacity(0.2),
+                        backgroundColor: AppColors.white.withValues(alpha: 0.2),
                         child: PopupMenuButton(
                           itemBuilder: (context) => [
                             const PopupMenuItem(
@@ -186,8 +177,7 @@ class _HomeTabState extends State<_HomeTab> {
                               }
                             }
                           },
-                          child: const Icon(
-                              Icons.person, color: AppColors.white),
+                          child: const Icon(Icons.person, color: AppColors.white),
                         ),
                       ),
                     ],
@@ -219,30 +209,23 @@ class _HomeTabState extends State<_HomeTab> {
             ),
           ),
 
-          // ── Search & Filter Bar ──────────────────────
+          // ── Search Filter Bar ──────────────────────────
           if (_showSearchFilter)
             SliverToBoxAdapter(
               child: SearchAndFilterBar(
-                onClose: () {
-                  setState(() {
-                    _showSearchFilter = false;
-                  });
-                },
+                onClose: () => setState(() => _showSearchFilter = false),
               ),
             ),
 
-          // ── Search Toggle Button ─────────────────────
+          // ── Search Toggle ──────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: SizedBox(
                 height: 40,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _showSearchFilter = !_showSearchFilter;
-                    });
-                  },
+                  onPressed: () =>
+                      setState(() => _showSearchFilter = !_showSearchFilter),
                   icon: const Icon(Icons.search),
                   label: Text(_showSearchFilter ? 'Hide Search' : 'Search & Filter'),
                   style: ElevatedButton.styleFrom(
@@ -254,11 +237,11 @@ class _HomeTabState extends State<_HomeTab> {
             ),
           ),
 
-          // ── Low stock warning ────────────────────────
+          // ── Low stock warning ──────────────────────────
           if (lowStock.isNotEmpty)
             SliverToBoxAdapter(
               child: Container(
-                margin: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                margin: const EdgeInsets.fromLTRB(24, 4, 24, 0),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
@@ -267,8 +250,7 @@ class _HomeTabState extends State<_HomeTab> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: Colors.red.shade600),
+                    Icon(Icons.warning_amber_rounded, color: Colors.red.shade600),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -284,7 +266,7 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ),
 
-          // ── Pending section ──────────────────────────
+          // ── Pending section title ──────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -308,7 +290,7 @@ class _HomeTabState extends State<_HomeTab> {
             ),
           ),
 
-          // ── Pending list ─────────────────────────────
+          // ── Pending list ───────────────────────────────
           pending.isEmpty
               ? SliverToBoxAdapter(
                   child: Padding(
@@ -334,8 +316,7 @@ class _HomeTabState extends State<_HomeTab> {
                     (context, index) {
                       final medicine = pending[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: MedicineCard(
                           medicine: medicine,
                           onTaken: () => context
@@ -348,7 +329,7 @@ class _HomeTabState extends State<_HomeTab> {
                   ),
                 ),
 
-          // ── Taken today ──────────────────────────────
+          // ── Taken today ────────────────────────────────
           if (taken.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
@@ -396,7 +377,7 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-// ── Stat card ──────────────────────────────────────────────
+// ── Stat card widget ───────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final String   label;
   final String   value;
@@ -414,7 +395,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.white.withOpacity(0.2),
+          color: AppColors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -432,7 +413,7 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: AppColors.white.withOpacity(0.8),
+                color: AppColors.white.withValues(alpha: 0.8),
                 fontSize: 11,
               ),
             ),
