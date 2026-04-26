@@ -4,11 +4,13 @@ import '../providers/medicine_provider.dart';
 import '../services/auth_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/medicine_card.dart';
+import '../widgets/search_filter_bar.dart';
 import 'add_medicine_screen.dart';
 import 'history_screen.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 import 'profiles_screen.dart';
+import 'statistics_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // List of screens for each tab
   final List<Widget> _screens = [
     const _HomeTab(),
+    const StatisticsDashboardScreen(),
     const HistoryScreen(),
     const ProfilesScreen(),
     const SettingsScreen(),
@@ -70,6 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
+            icon:       Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart),
+            label: 'Stats',
+          ),
+          BottomNavigationBarItem(
             icon:       Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'History',
@@ -91,14 +99,22 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ── Home tab content (extracted from old HomeScreen) ────────
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   const _HomeTab();
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  bool _showSearchFilter = false;
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MedicineProvider>();
-    final pending  = provider.pendingMedicines;
-    final taken    = provider.takenMedicines;
+    final filtered = provider.filteredMedicines;
+    final pending  = filtered.where((m) => !m.isTaken).toList();
+    final taken    = filtered.where((m) => m.isTaken).toList();
     final lowStock = provider.lowStockMedicines;
 
     return SafeArea(
@@ -203,6 +219,41 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
 
+          // ── Search & Filter Bar ──────────────────────
+          if (_showSearchFilter)
+            SliverToBoxAdapter(
+              child: SearchAndFilterBar(
+                onClose: () {
+                  setState(() {
+                    _showSearchFilter = false;
+                  });
+                },
+              ),
+            ),
+
+          // ── Search Toggle Button ─────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: SizedBox(
+                height: 40,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _showSearchFilter = !_showSearchFilter;
+                    });
+                  },
+                  icon: const Icon(Icons.search),
+                  label: Text(_showSearchFilter ? 'Hide Search' : 'Search & Filter'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // ── Low stock warning ────────────────────────
           if (lowStock.isNotEmpty)
             SliverToBoxAdapter(
@@ -221,7 +272,7 @@ class _HomeTab extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '${lowStock.map((m) => m.name).join(', ')} running low — please refill!',
+                        '${lowStock.map((m) => m.name).join(', ')} need refill soon!',
                         style: TextStyle(
                           color: Colors.red.shade700,
                           fontWeight: FontWeight.w500,

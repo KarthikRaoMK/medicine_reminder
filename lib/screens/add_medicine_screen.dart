@@ -21,6 +21,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   // Default selected values
   String _selectedFrequency = 'Once a day';
   TimeOfDay _selectedTime   = TimeOfDay.now();
+  MedicineCategory _selectedCategory = MedicineCategory.other;
   bool _isLoading           = false;
 
   // Frequency options
@@ -90,6 +91,8 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
       frequency: _selectedFrequency,
       time:      _formatTime(_selectedTime),
       stockCount: int.parse(_stockController.text.trim()),
+      category: _selectedCategory,
+      refillThreshold: 7,
     );
 
     // Simulate short delay (will be API call later)
@@ -212,6 +215,46 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
                     value == null || value.isEmpty
                         ? 'Please enter dosage'
                         : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Category dropdown
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<MedicineCategory>(
+                    value: _selectedCategory,
+                    isExpanded: true,
+                    icon: const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.primary),
+                    items: MedicineCategory.values.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.category,
+                                size: 18, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(category.label),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedCategory = value);
+                      }
+                    },
+                  ),
+                ),
               ),
 
               const SizedBox(height: 24),
