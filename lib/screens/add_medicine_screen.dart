@@ -203,7 +203,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
 
               const SizedBox(height: 24),
 
-              _SectionTitle(title: '🕐 Schedule'),
+              _SectionTitle(title: ' Schedule'),
               const SizedBox(height: 12),
 
               // Frequency dropdown

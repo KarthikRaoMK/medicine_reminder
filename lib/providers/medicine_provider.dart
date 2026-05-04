@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/medicine.dart';
 import '../models/history.dart';
 import '../services/notification_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MedicineProvider extends ChangeNotifier {
 
@@ -184,16 +185,38 @@ class MedicineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addMedicine(Medicine medicine) {
-    _medicines.add(medicine);
-    final notifId = (medicine.id ?? _medicines.length).abs() % 2147483647;
-    NotificationService().showNotification(
-      id: notifId,
-      title: '+ New Medicine Added',
-      body: '${medicine.name} (${medicine.dosage}) - ${medicine.frequency}',
-    );
-    notifyListeners();
+ Future<void> addMedicine(Medicine medicine) async {
+   
+  _medicines.add(medicine);
+
+  final notifId = (medicine.id ?? _medicines.length).abs() % 2147483647;
+  NotificationService().showNotification(
+    id: notifId,
+    title: '+ New Medicine Added',
+    body: '${medicine.name} (${medicine.dosage}) - ${medicine.frequency}',
+  );
+
+  notifyListeners();
+
+ 
+  try {
+    await FirebaseFirestore.instance.collection('medicines').add({
+      'name': medicine.name,
+      'dosage': medicine.dosage,
+      'frequency': medicine.frequency,
+      'time': medicine.time,
+      'stockCount': medicine.stockCount,
+      'category': medicine.category.name,
+      'refillThreshold': medicine.refillThreshold,
+      'createdAt': Timestamp.now(),
+    });
+
+    print("Medicine saved to Firebase ");
+
+  } catch (e) {
+    print("Error saving to Firebase : $e");
   }
+}
 
   void deleteMedicine(int id) {
     _medicines.removeWhere((m) => m.id == id);
