@@ -51,6 +51,12 @@ class MedicineProvider extends ChangeNotifier {
 
   final List<MedicineHistory> _history = [];
 
+  MedicineProvider() {
+    for (var medicine in _medicines) {
+      _scheduleMedicineNotification(medicine);
+    }
+  }
+
   // Search and filter — now public getters so widgets can read them
   String _searchQuery = '';
   MedicineCategory? _selectedCategory;
@@ -182,19 +188,18 @@ class MedicineProvider extends ChangeNotifier {
       notes:        'Rescheduled from $oldTime to $newTime',
     ));
 
+    final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+    NotificationService().cancelNotification(notifId);
+    _scheduleMedicineNotification(medicine);
+
     notifyListeners();
   }
 
- Future<void> addMedicine(Medicine medicine) async {
+  Future<void> addMedicine(Medicine medicine) async {
    
   _medicines.add(medicine);
 
-  final notifId = (medicine.id ?? _medicines.length).abs() % 2147483647;
-  NotificationService().showNotification(
-    id: notifId,
-    title: '+ New Medicine Added',
-    body: '${medicine.name} (${medicine.dosage}) - ${medicine.frequency}',
-  );
+  _scheduleMedicineNotification(medicine);
 
   notifyListeners();
 
@@ -219,6 +224,13 @@ class MedicineProvider extends ChangeNotifier {
 }
 
   void deleteMedicine(int id) {
+    try {
+      final medicine = _medicines.firstWhere((m) => m.id == id);
+      final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+      NotificationService().cancelNotification(notifId);
+    } catch (e) {
+      // Medicine not found
+    }
     _medicines.removeWhere((m) => m.id == id);
     notifyListeners();
   }
@@ -226,5 +238,41 @@ class MedicineProvider extends ChangeNotifier {
   void clearHistory() {
     _history.clear();
     notifyListeners();
+  }
+
+  void _scheduleMedicineNotification(Medicine medicine) {
+    final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+    
+    DateTime scheduledTime;
+    try {
+      final parts = medicine.time.split(' ');
+      final timeParts = parts[0].split(':');
+      int hour = int.parse(timeParts[0]);
+      int minute = int.parse(timeParts[1]);
+      final isPM = parts.length > 1 && parts[1].toUpperCase() == 'PM';
+      
+      if (isPM && hour != 12) {
+        hour += 12;
+      } else if (!isPM && hour == 12) {
+        hour = 0;
+      }
+      
+      final now = DateTime.now();
+      scheduledTime = DateTime(now.year, now.month, now.day, hour, minute);
+      
+      if (scheduledTime.isBefore(now)) {
+        scheduledTime = scheduledTime.add(const Duration(days: 1));
+      }
+    } catch (e) {
+      // Fallback
+      scheduledTime = DateTime.now().add(const Duration(minutes: 1));
+    }
+
+    NotificationService().scheduleNotification(
+      id: notifId,
+      title: 'Time for ${medicine.name}',
+      body: 'Dosage: ${medicine.dosage} - ${medicine.frequency}',
+      scheduledTime: scheduledTime,
+    );
   }
 }

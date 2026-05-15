@@ -99,6 +99,17 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   bool _showSearchFilter = false;
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning!';
+    } else if (hour < 17) {
+      return 'Good Afternoon!';
+    } else {
+      return 'Good Evening!';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MedicineProvider>();
@@ -132,7 +143,7 @@ class _HomeTabState extends State<_HomeTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Good Morning! 👋',
+                            _getGreeting(),
                             style: TextStyle(
                               // ✅ Fixed: withValues instead of withOpacity
                               color: AppColors.white.withValues(alpha: 0.8),
