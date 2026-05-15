@@ -9,8 +9,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class MedicineProvider extends ChangeNotifier {
 
   List<Medicine> _medicines = [];
-  final List<MedicineHistory> _history = [];
+  List<MedicineHistory> _history = [];
   StreamSubscription<QuerySnapshot>? _medicinesSubscription;
+  StreamSubscription<QuerySnapshot>? _historySubscription;
 
   MedicineProvider() {
     _initMedicinesStream();
@@ -39,11 +40,25 @@ class MedicineProvider extends ChangeNotifier {
       
       notifyListeners();
     });
+
+    _historySubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('history')
+        .orderBy('takenAt', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      _history = snapshot.docs.map((doc) {
+        return MedicineHistory.fromJson(doc.data());
+      }).toList();
+      notifyListeners();
+    });
   }
 
   @override
   void dispose() {
     _medicinesSubscription?.cancel();
+    _historySubscription?.cancel();
     super.dispose();
   }
 
@@ -116,6 +131,14 @@ class MedicineProvider extends ChangeNotifier {
     final medicine = _medicines.firstWhere((m) => m.id == id);
     medicine.isTaken = !medicine.isTaken;
 
+    if (medicine.isTaken) {
+      if (medicine.stockCount > 0) {
+        medicine.stockCount -= 1;
+      }
+    } else {
+      medicine.stockCount += 1;
+    }
+
     final userId = AuthService().currentUserId;
     if (userId != null) {
       FirebaseFirestore.instance
@@ -123,10 +146,13 @@ class MedicineProvider extends ChangeNotifier {
           .doc(userId)
           .collection('medicines')
           .doc(id)
-          .update({'isTaken': medicine.isTaken});
+          .update({
+            'isTaken': medicine.isTaken,
+            'stockCount': medicine.stockCount,
+          });
     }
 
-    _history.add(MedicineHistory(
+    final historyEntry = MedicineHistory(
       medicineName: medicine.name,
       dosage:       medicine.dosage,
       frequency:    medicine.frequency,
@@ -134,7 +160,15 @@ class MedicineProvider extends ChangeNotifier {
       status:       medicine.isTaken ? 'taken' : 'missed',
       takenAt:      DateTime.now(),
       category:     medicine.category.label,
-    ));
+    );
+
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('history')
+          .add(historyEntry.toJson());
+    }
 
     if (medicine.isTaken) {
       NotificationService().showNotification(
@@ -161,7 +195,7 @@ class MedicineProvider extends ChangeNotifier {
           .update({'snoozedUntil': medicine.snoozedUntil?.toIso8601String()});
     }
 
-    _history.add(MedicineHistory(
+    final historyEntry = MedicineHistory(
       medicineName: medicine.name,
       dosage:       medicine.dosage,
       frequency:    medicine.frequency,
@@ -170,7 +204,15 @@ class MedicineProvider extends ChangeNotifier {
       takenAt:      DateTime.now(),
       category:     medicine.category.label,
       notes:        'Snoozed for ${duration.inMinutes} minutes',
-    ));
+    );
+
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('history')
+          .add(historyEntry.toJson());
+    }
 
     NotificationService().showNotification(
       id: id.hashCode,
@@ -200,7 +242,7 @@ class MedicineProvider extends ChangeNotifier {
           });
     }
 
-    _history.add(MedicineHistory(
+    final historyEntry = MedicineHistory(
       medicineName: medicine.name,
       dosage:       medicine.dosage,
       frequency:    medicine.frequency,
@@ -209,7 +251,15 @@ class MedicineProvider extends ChangeNotifier {
       takenAt:      DateTime.now(),
       category:     medicine.category.label,
       notes:        'Rescheduled from $oldTime to $newTime',
-    ));
+    );
+
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('history')
+          .add(historyEntry.toJson());
+    }
 
     final notifId = (medicine.id?.hashCode ?? medicine.hashCode).abs() % 2147483647;
     NotificationService().cancelNotification(notifId);
@@ -264,9 +314,18 @@ class MedicineProvider extends ChangeNotifier {
     }
   }
 
-  void clearHistory() {
-    _history.clear();
-    notifyListeners();
+  Future<void> clearHistory() async {
+    final userId = AuthService().currentUserId;
+    if (userId != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('history')
+          .get();
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    }
   }
 
   void _scheduleMedicineNotification(Medicine medicine) {

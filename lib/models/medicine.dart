@@ -18,7 +18,7 @@ class Medicine {
   final String dosage;
   final String frequency;
   String       time;  // Made mutable for snooze
-  final int    stockCount;
+  int          stockCount;
   bool         isTaken;
   final MedicineCategory category;
   final DateTime? refillDate;

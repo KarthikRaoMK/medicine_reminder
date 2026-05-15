@@ -43,4 +43,17 @@ class MedicineHistory {
     'category': category,
     'notes': notes,
   };
+
+  factory MedicineHistory.fromJson(Map<String, dynamic> json) {
+    return MedicineHistory(
+      medicineName: json['medicineName'] ?? '',
+      dosage: json['dosage'] ?? '',
+      frequency: json['frequency'] ?? '',
+      time: json['time'] ?? '',
+      status: json['status'] ?? 'unknown',
+      takenAt: json['takenAt'] != null ? DateTime.parse(json['takenAt']) : DateTime.now(),
+      category: json['category'],
+      notes: json['notes'],
+    );
+  }
 }
