@@ -68,7 +68,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
     setState(() => _isLoading = true);
 
     final medicine = Medicine(
-      id:              DateTime.now().millisecondsSinceEpoch,
+      id:              DateTime.now().millisecondsSinceEpoch.toString(),
       name:            _nameController.text.trim(),
       dosage:          _dosageController.text.trim(),
       frequency:       _selectedFrequency,

@@ -139,27 +139,29 @@ class _HomeTabState extends State<_HomeTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getGreeting(),
-                            style: TextStyle(
-                              // ✅ Fixed: withValues instead of withOpacity
-                              color: AppColors.white.withValues(alpha: 0.8),
-                              fontSize: 14,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _getGreeting(),
+                              style: TextStyle(
+                                color: AppColors.white.withValues(alpha: 0.8),
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                          const Text(
-                            'Your Medicines',
-                            style: TextStyle(
-                              color: AppColors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                            const Text(
+                              'Your Medicines',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 16),
                       CircleAvatar(
                         radius: 24,
                         backgroundColor: AppColors.white.withValues(alpha: 0.2),
@@ -314,7 +316,7 @@ class _HomeTabState extends State<_HomeTab> {
                               size: 48, color: Colors.green.shade300),
                           const SizedBox(height: 8),
                           Text(
-                            'All medicines taken for today! 🎉',
+                            'All medicines taken for today!',
                             style: TextStyle(color: AppColors.textGrey),
                           ),
                         ],

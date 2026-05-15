@@ -13,7 +13,7 @@ enum MedicineCategory {
 }
 
 class Medicine {
-  final int?   id;
+  String?      id;
   final String name;
   final String dosage;
   final String frequency;
@@ -73,7 +73,7 @@ class Medicine {
 
   // JSON map → Dart object  (used when receiving from API)
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
-    id:              json['id'],
+    id:              json['id']?.toString(),
     name:            json['name'],
     dosage:          json['dosage'],
     frequency:       json['frequency'],

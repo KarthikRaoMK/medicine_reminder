@@ -1,60 +1,50 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/medicine.dart';
 import '../models/history.dart';
 import '../services/notification_service.dart';
+import '../services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MedicineProvider extends ChangeNotifier {
 
-  final List<Medicine> _medicines = [
-    Medicine(
-      id: 1,
-      name: 'Paracetamol',
-      dosage: '500mg',
-      frequency: 'Twice a day',
-      time: '08:00 AM',
-      stockCount: 14,
-      category: MedicineCategory.painkiller,
-      refillThreshold: 10,
-    ),
-    Medicine(
-      id: 2,
-      name: 'Vitamin D3',
-      dosage: '1000 IU',
-      frequency: 'Once a day',
-      time: '09:00 AM',
-      stockCount: 30,
-      category: MedicineCategory.vitamin,
-      refillThreshold: 20,
-    ),
-    Medicine(
-      id: 3,
-      name: 'Metformin',
-      dosage: '850mg',
-      frequency: 'Three times a day',
-      time: '01:00 PM',
-      stockCount: 5,
-      category: MedicineCategory.diabetes,
-      refillThreshold: 15,
-    ),
-    Medicine(
-      id: 4,
-      name: 'Omega 3',
-      dosage: '1000mg',
-      frequency: 'Once a day',
-      time: '08:00 PM',
-      stockCount: 20,
-      category: MedicineCategory.supplement,
-      refillThreshold: 10,
-    ),
-  ];
-
+  List<Medicine> _medicines = [];
   final List<MedicineHistory> _history = [];
+  StreamSubscription<QuerySnapshot>? _medicinesSubscription;
 
   MedicineProvider() {
-    for (var medicine in _medicines) {
-      _scheduleMedicineNotification(medicine);
-    }
+    _initMedicinesStream();
+  }
+
+  void _initMedicinesStream() {
+    final userId = AuthService().currentUserId;
+    if (userId == null) return;
+
+    _medicinesSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('medicines')
+        .snapshots()
+        .listen((snapshot) {
+      
+      _medicines = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return Medicine.fromJson(data);
+      }).toList();
+
+      for (var medicine in _medicines) {
+        _scheduleMedicineNotification(medicine);
+      }
+      
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _medicinesSubscription?.cancel();
+    super.dispose();
   }
 
   // Search and filter — now public getters so widgets can read them
@@ -122,9 +112,19 @@ class MedicineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleTaken(int id) {
+  void toggleTaken(String id) {
     final medicine = _medicines.firstWhere((m) => m.id == id);
     medicine.isTaken = !medicine.isTaken;
+
+    final userId = AuthService().currentUserId;
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('medicines')
+          .doc(id)
+          .update({'isTaken': medicine.isTaken});
+    }
 
     _history.add(MedicineHistory(
       medicineName: medicine.name,
@@ -138,8 +138,8 @@ class MedicineProvider extends ChangeNotifier {
 
     if (medicine.isTaken) {
       NotificationService().showNotification(
-        id: id,
-        title: '✓ Medicine Taken',
+        id: id.hashCode,
+        title: 'Medicine Taken',
         body: '${medicine.name} (${medicine.dosage}) marked as taken',
       );
     }
@@ -147,9 +147,19 @@ class MedicineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void snoozeMedicine(int id, Duration duration) {
+  void snoozeMedicine(String id, Duration duration) {
     final medicine = _medicines.firstWhere((m) => m.id == id);
     medicine.snoozedUntil = DateTime.now().add(duration);
+
+    final userId = AuthService().currentUserId;
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('medicines')
+          .doc(id)
+          .update({'snoozedUntil': medicine.snoozedUntil?.toIso8601String()});
+    }
 
     _history.add(MedicineHistory(
       medicineName: medicine.name,
@@ -163,19 +173,32 @@ class MedicineProvider extends ChangeNotifier {
     ));
 
     NotificationService().showNotification(
-      id: id,
-      title: '⏰ Reminder Snoozed',
+      id: id.hashCode,
+      title: 'Reminder Snoozed',
       body: '${medicine.name} snoozed for ${duration.inMinutes} minutes',
     );
 
     notifyListeners();
   }
 
-  void rescheduleMedicine(int id, String newTime) {
+  void rescheduleMedicine(String id, String newTime) {
     final medicine = _medicines.firstWhere((m) => m.id == id);
     final oldTime  = medicine.time;
     medicine.time  = newTime;
     medicine.snoozedUntil = null;
+
+    final userId = AuthService().currentUserId;
+    if (userId != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('medicines')
+          .doc(id)
+          .update({
+            'time': newTime,
+            'snoozedUntil': null
+          });
+    }
 
     _history.add(MedicineHistory(
       medicineName: medicine.name,
@@ -188,7 +211,7 @@ class MedicineProvider extends ChangeNotifier {
       notes:        'Rescheduled from $oldTime to $newTime',
     ));
 
-    final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+    final notifId = (medicine.id?.hashCode ?? medicine.hashCode).abs() % 2147483647;
     NotificationService().cancelNotification(notifId);
     _scheduleMedicineNotification(medicine);
 
@@ -196,43 +219,49 @@ class MedicineProvider extends ChangeNotifier {
   }
 
   Future<void> addMedicine(Medicine medicine) async {
-   
-  _medicines.add(medicine);
+    final userId = AuthService().currentUserId;
+    if (userId == null) return;
+  
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('medicines')
+          .add({
+        'name': medicine.name,
+        'dosage': medicine.dosage,
+        'frequency': medicine.frequency,
+        'time': medicine.time,
+        'stockCount': medicine.stockCount,
+        'category': medicine.category.name,
+        'refillThreshold': medicine.refillThreshold,
+        'createdAt': Timestamp.now(),
+      });
 
-  _scheduleMedicineNotification(medicine);
-
-  notifyListeners();
-
- 
-  try {
-    await FirebaseFirestore.instance.collection('medicines').add({
-      'name': medicine.name,
-      'dosage': medicine.dosage,
-      'frequency': medicine.frequency,
-      'time': medicine.time,
-      'stockCount': medicine.stockCount,
-      'category': medicine.category.name,
-      'refillThreshold': medicine.refillThreshold,
-      'createdAt': Timestamp.now(),
-    });
-
-    print("Medicine saved to Firebase ");
-
-  } catch (e) {
-    print("Error saving to Firebase : $e");
+      print("Medicine saved to Firebase ");
+    } catch (e) {
+      print("Error saving to Firebase : $e");
+    }
   }
-}
 
-  void deleteMedicine(int id) {
+  void deleteMedicine(String id) {
     try {
       final medicine = _medicines.firstWhere((m) => m.id == id);
-      final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+      final notifId = (medicine.id?.hashCode ?? medicine.hashCode).abs() % 2147483647;
       NotificationService().cancelNotification(notifId);
+      
+      final userId = AuthService().currentUserId;
+      if (userId != null) {
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('medicines')
+            .doc(id)
+            .delete();
+      }
     } catch (e) {
       // Medicine not found
     }
-    _medicines.removeWhere((m) => m.id == id);
-    notifyListeners();
   }
 
   void clearHistory() {
@@ -241,7 +270,7 @@ class MedicineProvider extends ChangeNotifier {
   }
 
   void _scheduleMedicineNotification(Medicine medicine) {
-    final notifId = (medicine.id ?? medicine.hashCode).abs() % 2147483647;
+    final notifId = (medicine.id?.hashCode ?? medicine.hashCode).abs() % 2147483647;
     
     DateTime scheduledTime;
     try {

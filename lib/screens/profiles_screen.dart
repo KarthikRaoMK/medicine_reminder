@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/profile_provider.dart';
 import '../utils/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilesScreen extends StatefulWidget {
   const ProfilesScreen({super.key});
@@ -25,6 +26,9 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
       body: Consumer<ProfileProvider>(
         builder: (context, profileProvider, _) {
           final profile = profileProvider.profile;
+          final user = FirebaseAuth.instance.currentUser;
+          final displayName = user?.displayName ?? profile.name;
+          final displayEmail = user?.email ?? profile.email;
 
           return SingleChildScrollView(
             child: Column(
@@ -52,8 +56,8 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            profile.name.isNotEmpty
-                                ? profile.name[0].toUpperCase()
+                            displayName.isNotEmpty
+                                ? displayName[0].toUpperCase()
                                 : 'U',
                             style: const TextStyle(
                               color: AppColors.white,
@@ -65,7 +69,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        profile.name.isNotEmpty ? profile.name : 'User',
+                        displayName.isNotEmpty ? displayName : 'User',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontSize: 24,
@@ -74,7 +78,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        profile.email.isNotEmpty ? profile.email : 'No email',
+                        displayEmail.isNotEmpty ? displayEmail : 'No email',
                         style: TextStyle(
                           color: AppColors.white.withValues(alpha: 0.7),
                           fontSize: 14,
